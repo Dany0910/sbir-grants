@@ -10,9 +10,38 @@
 
 **從資格評估到計畫書撰寫，一站式 SBIR 申請解決方案**
 
-[📦 安裝指南](INSTALLATION.md) • [🚀 快速開始](GETTING_STARTED.md) • [💡 核心功能](#-核心功能) • [📁 專案結構](#-專案結構)
+[📦 一鍵安裝](#-一鍵安裝超級簡單) • [🚀 快速開始](GETTING_STARTED.md) • [💡 核心功能](#-核心功能) • [📁 專案結構](#-專案結構)
 
 </div>
+
+---
+
+## 🎯 一鍵安裝（超級簡單）
+
+**完全不懂電腦？沒關係！** 只要 3 個步驟：
+
+### Mac 用戶
+
+```bash
+# 1. 下載專案（複製這行，貼到終端機）
+cd ~/Documents && git clone https://github.com/backtrue/sbir-grants.git && cd sbir-grants
+
+# 2. 執行安裝（複製這行，貼到終端機）
+bash install-mac.sh
+
+# 3. 重啟 Claude Desktop，完成！
+```
+
+### Windows 用戶
+
+1. [下載 ZIP](https://github.com/backtrue/sbir-grants/archive/refs/heads/main.zip)
+2. 解壓縮到「文件」資料夾
+3. 雙擊 `install-windows.bat`
+4. 重啟 Claude Desktop，完成！
+
+### 不會用終端機？
+
+👉 看[完整圖文教學](INSTALLATION.md)（超級詳細，一步步教您）
 
 ---
 
