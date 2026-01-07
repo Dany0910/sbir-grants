@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-REM SBIR Skill 自動安裝程式 (Enhanced v3)
+REM SBIR Skill 自動安裝程式 (Enhanced v4 - Final)
 echo ==========================================
 echo    SBIR Skill 自動安裝程式
 echo ==========================================
@@ -52,11 +52,17 @@ if not exist "venv" (
     )
 )
 
-REM 使用絕對路徑執行 pip
-echo 正在安裝依賴套件...
+REM 使用絕對路徑執行 pip - 分開檢查每個命令
+echo 正在升級 pip...
 venv\Scripts\python.exe -m pip install --upgrade pip --quiet
-venv\Scripts\python.exe -m pip install mcp httpx pydantic --quiet
+if !errorlevel! neq 0 (
+    echo [X] pip 升級失敗
+    pause
+    exit /b 1
+)
 
+echo 正在安裝依賴套件...
+venv\Scripts\python.exe -m pip install mcp httpx pydantic --quiet
 if !errorlevel! neq 0 (
     echo [X] 套件安裝失敗
     echo 請檢查網路連線
@@ -93,7 +99,7 @@ if exist "!CONFIG_FILE!" (
     echo [i] 已備份現有設定至 claude_desktop_config.json.bak
 )
 
-REM 使用 PowerShell 進行 JSON 合併
+REM 使用 PowerShell 進行 JSON 合併（修正版）
 echo 正在更新設定檔...
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
@@ -103,15 +109,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "try {" ^
   "  if (Test-Path $configPath) {" ^
   "    $content = Get-Content $configPath -Raw -Encoding UTF8;" ^
-  "    if ([string]::IsNullOrWhiteSpace($content)) { $config = @{} } else { $config = $content | ConvertFrom-Json }" ^
+  "    if ([string]::IsNullOrWhiteSpace($content)) {" ^
+  "      $config = [PSCustomObject]@{ mcpServers = [PSCustomObject]@{} }" ^
+  "    } else {" ^
+  "      $config = $content | ConvertFrom-Json" ^
+  "    }" ^
   "  } else {" ^
-  "    $config = @{}" ^
+  "    $config = [PSCustomObject]@{ mcpServers = [PSCustomObject]@{} }" ^
   "  };" ^
-  "  if (-not $config.mcpServers) {" ^
-  "    $config | Add-Member -MemberType NoteProperty -Name 'mcpServers' -Value @{} -Force" ^
+  "  if ($null -eq $config.mcpServers) {" ^
+  "    $config | Add-Member -MemberType NoteProperty -Name 'mcpServers' -Value ([PSCustomObject]@{}) -Force" ^
   "  };" ^
   "  $newServer = [PSCustomObject]@{ command = $pythonExe; args = @($serverScript) };" ^
-  "  $config.mcpServers | Add-Member -MemberType NoteProperty -Name 'sbir-data' -Value $newServer -Force;" ^
+  "  if ($config.mcpServers -is [System.Management.Automation.PSCustomObject]) {" ^
+  "    $config.mcpServers | Add-Member -MemberType NoteProperty -Name 'sbir-data' -Value $newServer -Force" ^
+  "  } else {" ^
+  "    $config | Add-Member -MemberType NoteProperty -Name 'mcpServers' -Value ([PSCustomObject]@{ 'sbir-data' = $newServer }) -Force" ^
+  "  };" ^
   "  $config | ConvertTo-Json -Depth 10 | Set-Content $configPath -Encoding UTF8;" ^
   "  exit 0" ^
   "} catch {" ^
