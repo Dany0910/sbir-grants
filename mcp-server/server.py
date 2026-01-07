@@ -240,6 +240,70 @@ import glob
 # 取得專案根目錄（server.py 的上一層）
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# 版本檢查（每天最多檢查一次）
+import time
+import subprocess
+LAST_VERSION_CHECK = 0
+VERSION_CHECK_INTERVAL = 86400  # 24 小時
+
+def check_for_updates() -> str | None:
+    """
+    檢查是否有新版本可用
+    返回更新提醒訊息，如果已是最新則返回 None
+    """
+    global LAST_VERSION_CHECK
+    
+    current_time = time.time()
+    
+    # 每 24 小時只檢查一次
+    if current_time - LAST_VERSION_CHECK < VERSION_CHECK_INTERVAL:
+        return None
+    
+    LAST_VERSION_CHECK = current_time
+    
+    try:
+        # 取得本地最新 commit
+        local_result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if local_result.returncode != 0:
+            return None
+        local_commit = local_result.stdout.strip()[:7]
+        
+        # 取得遠端最新 commit
+        subprocess.run(
+            ["git", "fetch", "--quiet"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            timeout=10
+        )
+        
+        remote_result = subprocess.run(
+            ["git", "rev-parse", "origin/main"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if remote_result.returncode != 0:
+            return None
+        remote_commit = remote_result.stdout.strip()[:7]
+        
+        # 比較版本
+        if local_commit != remote_commit:
+            return f"\n\n---\n💡 **有新版本可用！** 您的版本：`{local_commit}`，最新版本：`{remote_commit}`\n請說「**更新知識庫**」來獲得最新內容。"
+        
+        return None
+        
+    except Exception:
+        # 任何錯誤都靜默忽略
+        return None
+
+
 async def search_knowledge_base(query: str, category: str = "all") -> list[TextContent]:
     """
     搜尋 SBIR 知識庫中的相關文件
@@ -309,6 +373,11 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
         
         if len(relevant_files) > 10:
             result += f"\n（還有 {len(relevant_files) - 10} 個相關文件未顯示）\n"
+    
+    # 檢查是否有新版本（每天一次）
+    update_notice = check_for_updates()
+    if update_notice:
+        result += update_notice
     
     return [TextContent(type="text", text=result)]
 
