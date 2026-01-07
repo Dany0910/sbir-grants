@@ -15,6 +15,19 @@ from typing import Any, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
+# Import proposal generator functions
+try:
+    from mcp_server.proposal_generator_impl import (
+        start_proposal_generator,
+        save_answer,
+        get_progress,
+        generate_proposal,
+        STATE_FILE
+    )
+except ImportError:
+    # Fallback: functions will be defined later in this file
+    pass
+
 # ============================================
 # 資料模型
 # ============================================
