@@ -4,7 +4,7 @@
 
 ![SBIR Skill](https://img.shields.io/badge/SBIR-Skill-brightgreen?style=for-the-badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Files](https://img.shields.io/badge/Files-77+-blue.svg?style=for-the-badge)]()
+[![Files](https://img.shields.io/badge/Files-80+-blue.svg?style=for-the-badge)]()
 [![Words](https://img.shields.io/badge/Words-160K+-orange.svg?style=for-the-badge)]()
 [![Completion](https://img.shields.io/badge/Completion-98%25-success.svg?style=for-the-badge)]()
 
@@ -287,7 +287,7 @@ Claude：[使用 submission_checklist.md]
 |------|------|
 | 📁 總檔案數 | **77+** |
 | 📝 總字數 | **160,000+** |
-| ❓ FAQ 數量 | **81 個** |
+| ❓ FAQ 數量 | **101 個** |
 | 📚 方法論 | **6 個完整框架** |
 | ✍️ 撰寫指南 | **12 個專題** |
 | ✅ 檢核項目 | **200+** |
