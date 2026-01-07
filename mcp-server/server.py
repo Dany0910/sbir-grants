@@ -182,6 +182,15 @@ async def list_tools() -> list[Tool]:
                 "properties": {},
                 "required": []
             }
+        ),
+        Tool(
+            name="update_knowledge_base",
+            description="更新 SBIR 知識庫到最新版本（從 GitHub 拉取更新）",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
         )
     ]
 
@@ -216,6 +225,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         return await get_progress()
     elif name == "generate_proposal":
         return await generate_proposal()
+    elif name == "update_knowledge_base":
+        return await update_knowledge_base()
     else:
         raise ValueError(f"Unknown tool: {name}")
 
@@ -486,6 +497,63 @@ search_web("{keyword} site:dgbas.gov.tw OR site:moea.gov.tw")
 
 # ============================================
 # Server 啟動
+# ============================================
+# 知識庫更新功能
+# ============================================
+
+import subprocess
+
+async def update_knowledge_base() -> list[TextContent]:
+    """
+    從 GitHub 拉取最新版本的知識庫
+    """
+    try:
+        # 執行 git pull
+        result = subprocess.run(
+            ["git", "pull"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        if result.returncode == 0:
+            output = result.stdout.strip()
+            if "Already up to date" in output or "已經是最新" in output:
+                return [TextContent(
+                    type="text",
+                    text="✅ **知識庫已是最新版本！**\n\n您的 SBIR Skill 知識庫已經是最新的了，無需更新。"
+                )]
+            else:
+                return [TextContent(
+                    type="text",
+                    text=f"✅ **知識庫更新成功！**\n\n已從 GitHub 拉取最新版本。\n\n更新內容：\n```\n{output}\n```\n\n請重新啟動 Claude Desktop 以載入新內容。"
+                )]
+        else:
+            error_msg = result.stderr.strip() or result.stdout.strip()
+            return [TextContent(
+                type="text",
+                text=f"❌ **更新失敗**\n\n錯誤訊息：\n```\n{error_msg}\n```\n\n可能的原因：\n1. 沒有網路連線\n2. 專案目錄不是用 git clone 下載的\n3. 有未提交的本地修改\n\n您可以手動執行：\n```bash\ncd {PROJECT_ROOT} && git pull\n```"
+            )]
+            
+    except subprocess.TimeoutExpired:
+        return [TextContent(
+            type="text",
+            text="❌ **更新超時**\n\n網路連線可能太慢，請稍後再試或手動執行：\n```bash\ngit pull\n```"
+        )]
+    except FileNotFoundError:
+        return [TextContent(
+            type="text",
+            text="❌ **找不到 Git**\n\n您的系統可能沒有安裝 Git，或 Git 不在系統路徑中。\n\n請手動下載最新版本：\nhttps://github.com/backtrue/sbir-grants/archive/refs/heads/main.zip"
+        )]
+    except Exception as e:
+        return [TextContent(
+            type="text",
+            text=f"❌ **更新失敗**\n\n發生未預期的錯誤：{str(e)}\n\n請手動執行：\n```bash\ncd {PROJECT_ROOT} && git pull\n```"
+        )]
+
+# ============================================
+# 主程式入口
 # ============================================
 
 async def main():

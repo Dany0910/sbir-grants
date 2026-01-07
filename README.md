@@ -303,6 +303,28 @@ Claude：[使用 submission_checklist.md]
 
 ---
 
+## 🔄 更新知識庫
+
+### 方法一：在 Claude 中直接說（推薦！）
+
+安裝後，只要在 Claude Desktop 中說：
+
+```
+請更新 SBIR 知識庫
+```
+
+Claude 會自動從 GitHub 拉取最新版本！
+
+### 方法二：手動更新
+
+```bash
+cd sbir-grants && git pull
+```
+
+> ⚠️ 如果您是下載 ZIP 的用戶，需要重新下載才能獲得更新
+
+---
+
 ## 🛠️ 技術亮點
 
 ### 智能 MCP Server
