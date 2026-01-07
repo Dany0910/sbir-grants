@@ -4,8 +4,9 @@
 
 ![SBIR Skill](https://img.shields.io/badge/SBIR-Skill-brightgreen?style=for-the-badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Files](https://img.shields.io/badge/Files-65+-blue.svg?style=for-the-badge)]()
-[![Completion](https://img.shields.io/badge/Completion-100%25-success.svg?style=for-the-badge)]()
+[![Files](https://img.shields.io/badge/Files-77+-blue.svg?style=for-the-badge)]()
+[![Words](https://img.shields.io/badge/Words-160K+-orange.svg?style=for-the-badge)]()
+[![Completion](https://img.shields.io/badge/Completion-98%25-success.svg?style=for-the-badge)]()
 
 **從 3 個月縮短到 1 週，AI 協助您成功申請 SBIR 補助**
 
@@ -68,7 +69,7 @@ bash install-mac.sh
 ### 🤖 1. 智能知識庫搜尋
 
 **不需要記住檔案路徑！** Claude 會自動：
-- 🔍 搜尋相關文件（60+ 個檔案）
+- 🔍 搜尋相關文件（77+ 個檔案）
 - 📖 讀取內容並理解
 - 💡 根據知識庫精準回答
 
@@ -81,12 +82,16 @@ Claude：[自動搜尋 methodology_innovation.md]
        [提供結構化指導 + 實際範例]
 ```
 
-**知識庫內容**：
+**知識庫內容（160,000+ 字）**：
 - 📚 **6 個完整方法論**（問題陳述、創新、市場、可行性、團隊、經費）
+- ✍️ **撰寫技巧指南**（說故事 + 數據呈現 + 簡報技巧）
 - ❓ **81 個 FAQ**（涵蓋資格、流程、經費、審查、執行）
 - ✅ **5 個檢核清單**（申請前、撰寫、經費、送件）
-- 📊 **4 個案例研究**（成功 + 失敗案例分析）
+- 📊 **6 個案例研究**（機械、服務、生技、綠能產業）
 - 🎯 **快速啟動指南**（10 分鐘、1 小時、1 週）
+- 🏛️ **地方型 SBIR 總覽**（全台縣市比較）
+- 📋 **執行與結案指南**（從簽約到結案）
+- 🆕 **2025 政策更新**（補助調高、專利補助）
 
 ---
 
@@ -293,13 +298,23 @@ Claude：[使用 submission_checklist.md]
 
 ## 📊 專案統計
 
-- 📁 **總檔案數**：65+
-- 📝 **總字數**：100,000+
-- ❓ **FAQ 數量**：81 個
-- 📚 **方法論**：6 個完整框架
-- ✅ **檢核項目**：200+
-- 📊 **案例研究**：4 個詳細案例
-- 🎯 **完整度**：100%
+| 指標 | 數量 |
+|------|------|
+| 📁 總檔案數 | **77+** |
+| 📝 總字數 | **160,000+** |
+| ❓ FAQ 數量 | **81 個** |
+| 📚 方法論 | **6 個完整框架** |
+| ✍️ 撰寫指南 | **12 個專題** |
+| ✅ 檢核項目 | **200+** |
+| 📊 案例研究 | **6 個詳細案例** |
+| 🎯 完整度 | **98%** |
+
+**涵蓋完整申請流程**：
+```
+申請準備 → 計畫撰寫 → 簡報審查 → 執行管理 → 結案報告
+    ↓          ↓          ↓          ↓          ↓
+  ✅ FAQ    ✅ 技巧    ✅ 簡報    ✅ 指南    ✅ 範本
+```
 
 ---
 
