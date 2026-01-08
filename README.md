@@ -4,9 +4,11 @@
 
 ![SBIR Skill](https://img.shields.io/badge/SBIR-Skill-brightgreen?style=for-the-badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Files](https://img.shields.io/badge/Files-80+-blue.svg?style=for-the-badge)]()
-[![Words](https://img.shields.io/badge/Words-160K+-orange.svg?style=for-the-badge)]()
-[![Completion](https://img.shields.io/badge/Completion-98%25-success.svg?style=for-the-badge)]()
+[![Files](https://img.shields.io/badge/Files-84+-blue.svg?style=for-the-badge)]()
+[![Words](https://img.shields.io/badge/Words-170K+-orange.svg?style=for-the-badge)]()
+[![Completion](https://img.shields.io/badge/Completion-99.5%25-success.svg?style=for-the-badge)]()
+[![FAQ](https://img.shields.io/badge/FAQ-122-green.svg?style=for-the-badge)]()
+[![Tools](https://img.shields.io/badge/MCP_Tools-11-purple.svg?style=for-the-badge)]()
 
 **設計目標：協助您更快、更完整地完成 SBIR 申請**
 
@@ -27,11 +29,13 @@
 
 ### 使用 SBIR Skill 後
 
-- ✅ **加速撰寫流程**，整合 77+ 個檔案的知識庫
-- ✅ **所有資料整合**，81 個 FAQ + 6 個方法論
+- ✅ **加速撰寫流程**，整合 84+ 個檔案的知識庫
+- ✅ **所有資料整合**，122 個 FAQ + 6 個方法論
 - ✅ **自動檢核**，確保完整性
-- ✅ **AI 自動生成**，25 個問題生成完整計畫書
-- ✅ **提升申請品質**（有賊指引 + 完整架構）
+- ✅ **AI 自動生成**，Phase 1/2 完整計畫書
+- ✅ **Word 匯出**，一鍵產生 .docx 檔案
+- ✅ **經費試算**，自動建議預算分配
+- ✅ **提升申請品質**（真實案例指引 + 完整架構）
 
 ---
 
@@ -69,7 +73,7 @@ bash install-mac.sh
 ### 🤖 1. 智能知識庫搜尋
 
 **不需要記住檔案路徑！** Claude 會自動：
-- 🔍 搜尋相關文件（77+ 個檔案）
+- 🔍 搜尋相關文件（84+ 個檔案）
 - 📖 讀取內容並理解
 - 💡 根據知識庫精準回答
 
@@ -82,16 +86,19 @@ Claude：[自動搜尋 methodology_innovation.md]
        [提供結構化指導 + 實際範例]
 ```
 
-**知識庫內容（160,000+ 字）**：
+**知識庫內容（170,000+ 字）**：
 - 📚 **6 個完整方法論**（問題陳述、創新、市場、可行性、團隊、經費）
-- ✍️ **撰寫技巧指南**（說故事 + 數據呈現 + 簡報技巧）
-- ❓ **81 個 FAQ**（涵蓋資格、流程、經費、審查、執行）
+- ✍️ **撰寫技巧指南**（說故事 + 數據呈現 + 簡報技巧 + 服務創新）
+- ❓ **122 個 FAQ**（涵蓋資格、流程、經費、審查、執行、地方型）
 - ✅ **5 個檢核清單**（申請前、撰寫、經費、送件）
-- 📊 **6 個案例研究**（機械、服務、生技、綠能產業）
+- 📊 **7 個案例研究**（機械、服務、生技、綠能、電子產業）
 - 🎯 **快速啟動指南**（10 分鐘、1 小時、1 週）
-- 🏛️ **地方型 SBIR 總覽**（全台縣市比較）
+- 🏛️ **地方型 SBIR 總覽**（全台縣市比較 + 真實案例）
 - 📋 **執行與結案指南**（從簽約到結案）
 - 🆕 **2025 政策更新**（補助調高、專利補助）
+- 🎓 **審查意見回覆指南**（基於真實案例）
+- 💰 **經費編列說明**（委外合理性論述）
+- 🔍 **SWOT 分析深化**（真實成功案例）
 
 ---
 
