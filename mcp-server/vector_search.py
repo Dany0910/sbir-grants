@@ -10,6 +10,7 @@ from typing import Optional
 # 懶加載的全域變數
 _chroma_client = None
 _embedding_model = None
+_rerank_model = None
 _collection = None
 
 # 配置
@@ -182,3 +183,85 @@ def get_index_count(persist_directory: str) -> int:
 def needs_reindex(persist_directory: str) -> bool:
     """檢查是否需要重新建立索引"""
     return get_index_count(persist_directory) == 0
+
+
+def get_rerank_model():
+    """懶加載 Re-ranking 模型"""
+    global _rerank_model
+    if _rerank_model is None:
+        try:
+            from sentence_transformers import CrossEncoder
+            model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+            print(f"正在載入 Re-ranking 模型: {model_name}")
+            _rerank_model = CrossEncoder(model_name)
+            print("Re-ranking 模型載入完成")
+        except Exception as e:
+            print(f"載入 Re-ranking 模型失敗: {e}")
+            return None
+    return _rerank_model
+
+
+def rerank_results(query: str, results: list, top_k: int = 5) -> list:
+    """對搜尋結果進行重排序 (Cross-Encoder)"""
+    model = get_rerank_model()
+    
+    if model is None or not results:
+        return results[:top_k]
+    
+    try:
+        pairs = []
+        for r in results:
+            content = r.get('content', '')
+            pairs.append([query, content[:500]])
+        
+        scores = model.predict(pairs)
+        
+        for i, score in enumerate(scores):
+            results[i]['rerank_score'] = float(score)
+            
+        results.sort(key=lambda x: x.get('rerank_score', -999), reverse=True)
+        return results[:top_k]
+        
+    except Exception as e:
+        print(f"Re-ranking 失敗: {e}")
+        return results[:top_k]
+
+
+def mmr_sort(results: list, lambda_param: float = 0.7) -> list:
+    """MMR 多樣性排序"""
+    if not results:
+        return []
+        
+    selected = []
+    candidates = results.copy()
+    
+    while len(selected) < len(results):
+        best_score = -float('inf')
+        best_idx = -1
+        
+        for i, candidate in enumerate(candidates):
+            if 'rerank_score' in candidate:
+                relevance = candidate['rerank_score']
+            elif 'similarity' in candidate:
+                relevance = candidate['similarity'] * 10 
+            else:
+                relevance = candidate.get('final_score', 0) * 10
+            
+            diversity_penalty = 0
+            if selected:
+                candidate_path = candidate.get('metadata', {}).get('file_path') or candidate.get('path')
+                for sel in selected:
+                    sel_path = sel.get('metadata', {}).get('file_path') or sel.get('path')
+                    if candidate_path and sel_path and candidate_path == sel_path:
+                        diversity_penalty += 1.0
+            
+            mmr_score = relevance - (diversity_penalty * (1 - lambda_param) * 5)
+            
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = i
+        
+        if best_idx != -1:
+            selected.append(candidates.pop(best_idx))
+            
+    return selected

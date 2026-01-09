@@ -4,7 +4,9 @@
 
 - Windows 10/11
 - Python 3.8 或以上
-- Claude Desktop for Windows
+- 已安裝 **Python 3.10 或更高版本** ([下載連結](https://www.python.org/downloads/windows/))
+- 已安裝 **Claude Desktop App** ([下載連結](https://claude.ai/download))
+- **硬碟空間**：請預留約 **1.5 GB** 的可用空間（用於安裝 AI 語意搜尋所需的深度學習函式庫）
 
 ---
 

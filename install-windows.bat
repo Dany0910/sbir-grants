@@ -23,7 +23,12 @@ if not exist "mcp-server\server.py" (
 
 echo [OK] 找到專案資料夾
 echo.
-
+echo 注意事項：
+echo 本安裝程序將下載 AI 語意搜尋所需的深度學習函式庫 (PyTorch, Transformers)。
+echo 請確保您的硬碟有約 1.5 GB 的可用空間。
+echo.
+pause
+echo.
 REM 步驟 1: 檢查 Python
 echo 步驟 1/4: 檢查 Python...
 python --version >nul 2>&1

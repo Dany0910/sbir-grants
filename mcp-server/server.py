@@ -395,10 +395,18 @@ def check_for_updates() -> str | None:
         return None
 
 
-async def search_knowledge_base(query: str, category: str = "all") -> list[TextContent]:
+async def search_knowledge_base(query: str, category: str = "all") -> str:
     """
+    搜尋知識庫
     混合搜尋：關鍵字 + RAG 語意搜尋
     """
+    
+    # ===== 0. 檢查快取 =====
+    from search_cache import get_cache
+    cache = get_cache()
+    cached_result = cache.get(query, category)
+    if cached_result:
+        return [TextContent(type="text", text=cached_result + "\n\n💡 *此結果來自快取，回應速度更快*")]
     
     # 定義搜尋目錄
     search_dirs = {
@@ -416,8 +424,9 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
     # 搜尋檔案
     files = glob.glob(search_path, recursive=True)
     
-    # ===== 1. 關鍵字搜尋 =====
-    keywords = [kw.strip().lower() for kw in query.split() if kw.strip()]
+    # ===== 1. 關鍵字搜尋（含同義詞擴展）=====
+    from query_expansion import get_expanded_keywords
+    keywords = get_expanded_keywords(query)
     keyword_results = {}  # path -> score
     
     for file_path in files:
@@ -457,7 +466,7 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
     semantic_available = False
     
     try:
-        from vector_search import semantic_search, needs_reindex
+        from vector_search import semantic_search, needs_reindex, rerank_results, mmr_sort
         
         persist_dir = os.path.join(os.path.dirname(__file__), "chroma_db")
         
@@ -541,8 +550,80 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
         final_scores.append(info)
 
     
-    # 按總分排序
-    final_scores.sort(key=lambda x: x["final_score"], reverse=True)
+    # ===== 3.5. 先進行 Re-ranking (對前 20 名) =====
+    # 只有當 semantic_available 為真時才進行，因為需要模型
+    if semantic_available and len(final_scores) > 0:
+        # 取前 20 名進行重排序
+        top_candidates = final_scores[:20]
+        remaining = final_scores[20:]
+        
+        # 準備 Re-ranking 需要的格式 (需有 content)
+        # 注意：keyword search 結果可能沒有 content，需要處理
+        for cand in top_candidates:
+            if "content" not in cand:
+                # 嘗試讀取部分內容
+                try:
+                    with open(os.path.join(PROJECT_ROOT, cand["path"]), 'r', encoding='utf-8') as f:
+                        cand["content"] = f.read(1000) # 只讀前 1000 字
+                except:
+                    cand["content"] = cand["name"] # 降級使用檔名
+        
+        # 執行 Re-ranking
+        try:
+            reranked = rerank_results(query, top_candidates, top_k=20)
+            final_scores = reranked + remaining
+        except Exception as e:
+            print(f"Re-ranking 步驟錯誤: {e}")
+
+    # ===== 3.6. 時間加權 =====
+    from datetime import datetime
+    import math
+    
+    def apply_time_weight(score: float, source_date: str) -> float:
+        """對較新的文件給予更高權重"""
+        if not source_date:
+            return score
+        
+        try:
+            # 解析日期
+            if isinstance(source_date, str):
+                date_obj = datetime.strptime(source_date, "%Y-%m-%d")
+            else:
+                date_obj = source_date
+            
+            # 計算天數差異
+            days_old = (datetime.now() - date_obj).days
+            
+            # 時間衰減因子（1年衰減到 37%）
+            time_decay = math.exp(-days_old / 365)
+            
+            # 加權：70% 原始分數 + 30% 時間因素
+            # 注意：re-rank 分數可能是負的 logit，這裡的加權公式可能需要調整
+            # 簡單起見，如果是 rerank_score，直接加分
+            weighted_score = score * (0.7 + 0.3 * time_decay)
+            
+            return weighted_score
+        except:
+            return score
+    
+    # 應用時間加權
+    for info in final_scores:
+        if source_date := info.get("source_date"):
+            # 優先使用 rerank_score，如果沒有則使用 final_score
+            target_score_key = "rerank_score" if "rerank_score" in info else "final_score"
+            info[target_score_key] = apply_time_weight(info[target_score_key], source_date)
+    
+    # ===== 3.7. MMR 多樣性排序 =====
+    if semantic_available and len(final_scores) > 0:
+        try:
+            final_scores = mmr_sort(final_scores, lambda_param=0.7)
+        except Exception as e:
+            print(f"MMR 步驟錯誤: {e}")
+            # 降級：按分數排序
+            final_scores.sort(key=lambda x: x.get("rerank_score", x.get("final_score", 0)), reverse=True)
+    else:
+        # 僅按分數排序
+        final_scores.sort(key=lambda x: x.get("rerank_score", x.get("final_score", 0)), reverse=True)
     
     # ===== 4. 格式化結果 =====
     if not final_scores:
@@ -604,6 +685,21 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
         
         if len(final_scores) > 10:
             result += f"\n（還有 {len(final_scores) - 10} 個相關段落未顯示）\n"
+        
+        # ===== 5. 搜尋建議 =====
+        try:
+            from search_suggestions import generate_suggestions
+            suggestions = generate_suggestions(query, final_scores)
+            
+            if suggestions:
+                result += "\n💡 **您可能也想了解**：\n"
+                for sugg in suggestions:
+                    # 這裡使用特殊的 markdown 連結格式讓 Claude 知道這是建議查詢
+                    # 格式：[查詢: 問題](command:search_knowledge_base?query=問題)
+                    # 但 Claude 不一定支援 command link，直接列出文字即可
+                    result += f"- {sugg}\n"
+        except Exception as e:
+            print(f"搜尋建議生成失敗: {e}")
         
         if not semantic_available:
             result += "\n💡 **提示**：執行 `python mcp-server/build_index.py` 可啟用 AI 語意搜尋，提升搜尋準確度。\n"
