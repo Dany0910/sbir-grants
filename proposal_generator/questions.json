@@ -2,8 +2,8 @@
     "metadata": {
         "version": "1.0",
         "phase": "phase1",
-        "total_questions": 25,
-        "estimated_time": "30-45 分鐘"
+        "total_questions": 29,
+        "estimated_time": "35-50 分鐘"
     },
     "questions": [
         {
@@ -339,6 +339,61 @@
                 "min_length": 50,
                 "max_length": 500
             }
+        },
+        {
+            "id": "expected_revenue_year1",
+            "category": "預期成果",
+            "order": 26,
+            "question": "計畫結束後第 1 年，預期營收（萬元）？",
+            "type": "number",
+            "required": true,
+            "placeholder": "請填寫計畫結束後第 1 年的預期營收",
+            "validation": {
+                "min": 0,
+                "max": 100000
+            },
+            "help_text": "⚠️ 重要：SBIR 是政府投資，審查委員會評估投資效益比 (ROAS)。\n最低標準：補助 1 元 → 3 年累積產值至少 3 元\n建議目標：補助 1 元 → 3 年累積產值 5 元"
+        },
+        {
+            "id": "expected_revenue_year2",
+            "category": "預期成果",
+            "order": 27,
+            "question": "計畫結束後第 2 年，預期營收（萬元）？",
+            "type": "number",
+            "required": true,
+            "placeholder": "請填寫計畫結束後第 2 年的預期營收",
+            "validation": {
+                "min": 0,
+                "max": 100000
+            }
+        },
+        {
+            "id": "expected_revenue_year3",
+            "category": "預期成果",
+            "order": 28,
+            "question": "計畫結束後第 3 年，預期營收（萬元）？",
+            "type": "number",
+            "required": true,
+            "placeholder": "請填寫計畫結束後第 3 年的預期營收",
+            "validation": {
+                "min": 0,
+                "max": 100000
+            },
+            "help_text": "系統會自動計算 3 年累積產值與投資效益比 (ROAS)"
+        },
+        {
+            "id": "revenue_calculation_basis",
+            "category": "預期成果",
+            "order": 29,
+            "question": "營收預估的計算依據是？（非常重要！）",
+            "type": "textarea",
+            "required": true,
+            "placeholder": "例如：\n- 市場規模：5 億/年（根據 XXX 報告）\n- 目標市佔率：2%（第 3 年）\n- 預期營收 = 5 億 x 2% = 1,000 萬\n- 客戶開發計畫：第 1 年 5 家、第 2 年 15 家、第 3 年 30 家\n- 單一客戶年均消費：20 萬\n- 佐證：已有 3 家客戶簽署合作意向書",
+            "validation": {
+                "min_length": 100,
+                "max_length": 1000
+            },
+            "help_text": "⚠️ 審查委員最重視這一題！每個數字都要有依據。\n建議包含：市場規模、目標市佔率、客戶數量、單價、佐證資料"
         }
     ]
 }
