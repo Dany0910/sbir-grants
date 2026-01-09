@@ -397,7 +397,7 @@ def check_for_updates() -> str | None:
 
 async def search_knowledge_base(query: str, category: str = "all") -> list[TextContent]:
     """
-    搜尋 SBIR 知識庫中的相關文件
+    混合搜尋：關鍵字 + RAG 語意搜尋
     """
     
     # 定義搜尋目錄
@@ -416,11 +416,9 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
     # 搜尋檔案
     files = glob.glob(search_path, recursive=True)
     
-    # 分詞：將查詢拆分為關鍵字（支援空格分隔）
+    # ===== 1. 關鍵字搜尋 =====
     keywords = [kw.strip().lower() for kw in query.split() if kw.strip()]
-    
-    # 計算每個檔案的相關性分數
-    scored_files = []
+    keyword_results = {}  # path -> score
     
     for file_path in files:
         file_name = os.path.basename(file_path).lower()
@@ -430,40 +428,94 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read().lower()
             
-            # 計算相關性分數
             score = 0
             matched_keywords = []
             
             for keyword in keywords:
-                # 檔名匹配（權重 x3）
                 if keyword in file_name:
                     score += 3
                     matched_keywords.append(keyword)
-                # 內容匹配（權重 x1，但計算出現次數）
                 elif keyword in content:
-                    # 計算關鍵字出現次數（最多計 5 次）
                     count = min(content.count(keyword), 5)
                     score += count
                     matched_keywords.append(keyword)
             
-            # 只有至少匹配一個關鍵字才加入結果
             if score > 0:
-                scored_files.append({
+                keyword_results[relative_path] = {
                     "path": relative_path,
                     "name": os.path.basename(file_path),
                     "category": get_category_from_path(relative_path),
-                    "score": score,
-                    "matched_keywords": len(set(matched_keywords)),  # 匹配的不重複關鍵字數
+                    "keyword_score": score,
+                    "matched_keywords": len(set(matched_keywords)),
                     "total_keywords": len(keywords)
-                })
+                }
         except Exception:
             continue
     
-    # 按分數排序（分數高的在前）
-    scored_files.sort(key=lambda x: (x["matched_keywords"], x["score"]), reverse=True)
+    # ===== 2. 語意搜尋 (RAG) =====
+    semantic_results = {}  # path -> similarity
+    semantic_available = False
     
-    # 格式化結果
-    if not scored_files:
+    try:
+        from vector_search import semantic_search, needs_reindex
+        
+        persist_dir = os.path.join(os.path.dirname(__file__), "chroma_db")
+        
+        if not needs_reindex(persist_dir):
+            semantic_available = True
+            results = semantic_search(query, persist_dir, n_results=15)
+            
+            for result in results:
+                semantic_results[result["id"]] = result["similarity"]
+    except Exception as e:
+        # 語意搜尋不可用，僅使用關鍵字搜尋
+        pass
+    
+    # ===== 3. 混合排序 =====
+    KEYWORD_WEIGHT = 0.4
+    SEMANTIC_WEIGHT = 0.6
+    
+    all_paths = set(keyword_results.keys()) | set(semantic_results.keys())
+    
+    # 正規化關鍵字分數
+    max_keyword_score = max([r["keyword_score"] for r in keyword_results.values()], default=1)
+    
+    final_scores = []
+    for path in all_paths:
+        # 關鍵字分數（正規化到 0-1）
+        kw_info = keyword_results.get(path, {})
+        kw_score = kw_info.get("keyword_score", 0) / max_keyword_score if max_keyword_score > 0 else 0
+        
+        # 語意分數（已經是 0-1）
+        sem_score = semantic_results.get(path, 0)
+        
+        # 加權總分
+        if semantic_available:
+            final_score = kw_score * KEYWORD_WEIGHT + sem_score * SEMANTIC_WEIGHT
+        else:
+            final_score = kw_score  # 只有關鍵字
+        
+        # 取得文件資訊
+        if path in keyword_results:
+            info = keyword_results[path].copy()
+        else:
+            info = {
+                "path": path,
+                "name": os.path.basename(path),
+                "category": get_category_from_path(path),
+                "matched_keywords": 0,
+                "total_keywords": len(keywords)
+            }
+        
+        info["final_score"] = final_score
+        info["semantic_score"] = sem_score
+        final_scores.append(info)
+    
+    # 按總分排序
+    final_scores.sort(key=lambda x: x["final_score"], reverse=True)
+    
+    # ===== 4. 格式化結果 =====
+    if not final_scores:
         result = f"""
 ## 搜尋結果
 
@@ -474,29 +526,40 @@ async def search_knowledge_base(query: str, category: str = "all") -> list[TextC
 - 查看完整文件列表：README.md
 """
     else:
+        search_mode = "🔍 混合搜尋（關鍵字 + AI 語意）" if semantic_available else "🔍 關鍵字搜尋"
         result = f"""
-## 搜尋結果：找到 {len(scored_files)} 個相關文件
+## 搜尋結果：找到 {len(final_scores)} 個相關文件
 
+**搜尋模式**：{search_mode}
 **搜尋關鍵字**：{query}
 
 """
-        for i, file_info in enumerate(scored_files[:10], 1):  # 最多顯示 10 個
+        for i, file_info in enumerate(final_scores[:10], 1):
             # 顯示匹配度
-            match_ratio = f"{file_info['matched_keywords']}/{file_info['total_keywords']}"
-            result += f"{i}. **{file_info['name']}** (匹配: {match_ratio} 關鍵字)\n"
+            if semantic_available and file_info.get("semantic_score", 0) > 0:
+                relevance = f"相關度: {file_info['final_score']*100:.0f}%"
+            else:
+                match_ratio = f"{file_info.get('matched_keywords', 0)}/{file_info['total_keywords']}"
+                relevance = f"匹配: {match_ratio} 關鍵字"
+            
+            result += f"{i}. **{file_info['name']}** ({relevance})\n"
             result += f"   - 類別：{file_info['category']}\n"
             result += f"   - 路徑：`{file_info['path']}`\n"
             result += f"   - 使用 `read_document` 工具讀取此文件\n\n"
         
-        if len(scored_files) > 10:
-            result += f"\n（還有 {len(scored_files) - 10} 個相關文件未顯示）\n"
+        if len(final_scores) > 10:
+            result += f"\n（還有 {len(final_scores) - 10} 個相關文件未顯示）\n"
+        
+        if not semantic_available:
+            result += "\n💡 **提示**：執行 `python mcp-server/build_index.py` 可啟用 AI 語意搜尋，提升搜尋準確度。\n"
     
-    # 檢查是否有新版本（每天一次）
+    # 檢查是否有新版本
     update_notice = check_for_updates()
     if update_notice:
         result += update_notice
     
     return [TextContent(type="text", text=result)]
+
 
 async def read_document(file_path: str) -> list[TextContent]:
     """
